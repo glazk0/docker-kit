@@ -22,10 +22,12 @@ services:
       - EMAIL=${EMAIL}
       # Cloudflare API token for DNS management (optional)
       - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN:-}
+    networks:
+      - caddy_network
+      
 networks:
   caddy_network:
-    external: true
-  default:
+    name: caddy_network
     driver: bridge
 
 volumes:
