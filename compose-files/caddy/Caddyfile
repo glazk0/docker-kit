@@ -1,0 +1,239 @@
+{
+  email {$EMAIL}
+  
+  # Enable admin API for configuration management
+  admin localhost:2019
+  
+  # Set default log format
+  log {
+    output stdout
+    format console
+    level INFO
+  }
+  
+  # Global rate limiting (optional, uncomment if needed)
+  # servers {
+  #   max_header_size 16KB
+  #   read_timeout 30s
+  #   write_timeout 30s
+  #   idle_timeout 120s
+  # }
+  
+  # Uncomment for Cloudflare TLS - requires cloudflare plugin
+  # acme_ca https://acme-v02.api.letsencrypt.org/directory
+  # acme_dns cloudflare {$CLOUDFLARE_API_TOKEN}
+}
+
+(default) {
+  encode zstd gzip
+}
+
+(static) {
+  @static {
+    file
+    path *.ico *.css *.js *.gif *.jpeg *.jpg *.png *.webp *.svg *.ttf *.json *.woff *.woff2 *.eot *.otf *.map
+  }
+  header @static {
+    Cache-Control "public, max-age=31536000, immutable"
+    Vary "Accept-Encoding"
+  }
+}
+
+(security) {
+  header {
+    # Enable HSTS with preload
+    Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+    # Enable cross-site filter (XSS) and tell browser to block detected attacks
+    X-Xss-Protection "1; mode=block"
+    # Disable clients from sniffing media type
+    X-Content-Type-Options nosniff
+    # Prevent framing (clickjacking protection)
+    X-Frame-Options DENY
+    # Control referrer information
+    Referrer-Policy "strict-origin-when-cross-origin"
+    # Content Security Policy - customize based on your needs
+    Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'; media-src 'self'; object-src 'none'; child-src 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests"
+    # Permissions policy (formerly Feature Policy)
+    Permissions-Policy "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+    # Hide server information
+    -Server
+    -Link
+    -X-Powered-By
+    -X-AspNet-Version
+    -X-AspNetMvc-Version
+  }
+}
+
+(cors) {
+  @cors_preflight method OPTIONS
+  @cors header Origin {args.0}
+
+  handle @cors_preflight {
+    header Access-Control-Allow-Origin "{args.0}"
+    header Access-Control-Allow-Methods "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    header Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, X-File-Name"
+    header Access-Control-Allow-Credentials "true"
+    header Access-Control-Max-Age "86400"
+    respond "" 204
+  }
+
+  handle @cors {
+    header Access-Control-Allow-Origin "{args.0}"
+    header Access-Control-Allow-Credentials "true"
+    header Access-Control-Expose-Headers "Link, Location, X-Total-Count"
+  }
+}
+
+(rate_limit) {
+  rate_limit {
+    zone dynamic_ip {
+      key {remote_host}
+      events 100
+      window 1m
+    }
+    zone static_ip {
+      key {remote_host}
+      events 1000
+      window 1h
+    }
+  }
+}
+
+(logging) {
+  log {
+    output file /var/log/caddy/{args.0}.log {
+      roll_size 100mb
+      roll_keep 5
+      roll_keep_for 168h
+    }
+    format console
+    level INFO
+  }
+}
+
+(errors) {
+  handle_errors {
+    rewrite * /{err.status_code}
+    reverse_proxy https://http.cat {
+      header_up Host {upstream_hostport}
+      replace_status {err.status_code}
+    }
+  }
+}
+
+# Example: Cloudflare TLS configuration
+# Uncomment and configure when using Cloudflare Origin CA
+# {$DOMAIN_NAME} {
+#     import default
+#     import security
+#     import logging {$DOMAIN_NAME}
+#     
+#     # Cloudflare Origin CA certificates with client authentication
+#     tls /etc/ssl/certs/{$DOMAIN_NAME}.pem /etc/ssl/private/{$DOMAIN_NAME}.key {
+#         client_auth {
+#             mode require_and_verify
+#             trusted_ca_cert_file /etc/ssl/certs/cloudflare-origin-ca.pem
+#         }
+#         protocols tls1.2 tls1.3
+#         ciphers TLS_AES_128_GCM_SHA256 TLS_AES_256_GCM_SHA384 TLS_CHACHA20_POLY1305_SHA256 TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+#         curves x25519 secp256r1 secp384r1
+#     }
+#     
+#     # Real IP from Cloudflare - restore visitor's real IP
+#     real_ip from 173.245.48.0/20
+#     real_ip from 103.21.244.0/22
+#     real_ip from 103.22.200.0/22
+#     real_ip from 103.31.4.0/22
+#     real_ip from 141.101.64.0/18
+#     real_ip from 108.162.192.0/18
+#     real_ip from 190.93.240.0/20
+#     real_ip from 188.114.96.0/20
+#     real_ip from 197.234.240.0/22
+#     real_ip from 198.41.128.0/17
+#     real_ip from 162.158.0.0/15
+#     real_ip from 104.16.0.0/13
+#     real_ip from 104.24.0.0/14
+#     real_ip from 172.64.0.0/13
+#     real_ip from 131.0.72.0/22
+#     real_ip header CF-Connecting-IP
+#     
+#     # Optional: Rate limiting (recommended with Cloudflare)
+#     # import rate_limit
+#     
+#     # Health check endpoint
+#     handle /health {
+#         respond "OK" 200
+#     }
+#     
+#     # Main application
+#     handle {
+#         reverse_proxy www:3002 {
+#             # Connection pooling
+#             lb_policy round_robin
+#             
+#             # Headers for better debugging and Cloudflare integration
+#             header_up X-Real-IP {remote_host}
+#             header_up X-Forwarded-For {remote_host}
+#             header_up X-Forwarded-Proto {scheme}
+#             header_up X-Forwarded-Host {host}
+#             header_up CF-Connecting-IP {header.CF-Connecting-IP}
+#             header_up CF-IPCountry {header.CF-IPCountry}
+#             header_up CF-Ray {header.CF-Ray}
+#             
+#             # Health checking
+#             health_uri /health
+#             health_interval 30s
+#             health_timeout 5s
+#             health_status 2xx
+#             
+#             # Timeouts
+#             transport http {
+#                 dial_timeout 5s
+#                 read_timeout 10s
+#                 write_timeout 10s
+#             }
+#         }
+#     }
+# }
+
+# Default configuration (Let's Encrypt)
+{$DOMAIN_NAME} {
+    import default
+    import security
+    import logging {$DOMAIN_NAME}
+    
+    # Optional: Enable rate limiting
+    # import rate_limit
+    
+    # Health check endpoint
+    handle /health {
+        respond "OK" 200
+    }
+    
+    # Main application
+    handle {
+        reverse_proxy www:3002 {
+            # Connection pooling
+            lb_policy round_robin
+            
+            # Headers for better debugging
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Host {host}
+            
+            # Health checking
+            health_uri /health
+            health_interval 30s
+            health_timeout 5s
+            health_status 2xx
+            
+            # Timeouts
+            transport http {
+                dial_timeout 5s
+                read_timeout 10s
+                write_timeout 10s
+            }
+        }
+    }
+}
