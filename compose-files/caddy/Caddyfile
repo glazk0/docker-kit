@@ -147,32 +147,7 @@
 #     
 #     # Main application
 #     handle {
-#         reverse_proxy www:3002 {
-#             # Connection pooling
-#             lb_policy round_robin
-#             
-#             # Headers for better debugging and Cloudflare integration
-#             header_up X-Real-IP {remote_host}
-#             header_up X-Forwarded-For {remote_host}
-#             header_up X-Forwarded-Proto {scheme}
-#             header_up X-Forwarded-Host {host}
-#             header_up CF-Connecting-IP {header.CF-Connecting-IP}
-#             header_up CF-IPCountry {header.CF-IPCountry}
-#             header_up CF-Ray {header.CF-Ray}
-#             
-#             # Health checking
-#             health_uri /health
-#             health_interval 30s
-#             health_timeout 5s
-#             health_status 2xx
-#             
-#             # Timeouts
-#             transport http {
-#                 dial_timeout 5s
-#                 read_timeout 10s
-#                 write_timeout 10s
-#             }
-#         }
+#         reverse_proxy www:3002
 #     }
 # }
 
@@ -192,28 +167,6 @@
     
     # Main application
     handle {
-        reverse_proxy www:3002 {
-            # Connection pooling
-            lb_policy round_robin
-            
-            # Headers for better debugging
-            header_up X-Real-IP {remote_host}
-            header_up X-Forwarded-For {remote_host}
-            header_up X-Forwarded-Proto {scheme}
-            header_up X-Forwarded-Host {host}
-            
-            # Health checking
-            health_uri /health
-            health_interval 30s
-            health_timeout 5s
-            health_status 2xx
-            
-            # Timeouts
-            transport http {
-                dial_timeout 5s
-                read_timeout 10s
-                write_timeout 10s
-            }
-        }
+        reverse_proxy www:3002
     }
 }
