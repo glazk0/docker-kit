@@ -20,7 +20,8 @@ services:
       - DOMAIN_NAME=${DOMAIN_NAME}
       # Email is configured via Caddyfile global options
       - EMAIL=${EMAIL}
-
+      # Cloudflare API token for DNS management (optional)
+      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN:-}
 networks:
   caddy_network:
     external: true
