@@ -1,0 +1,111 @@
+# Environment files (contains sensitive information)
+.env
+.env.local
+.env.production
+*.env
+
+# SSL Certificates and Private Keys (NEVER commit these!)
+ssl/
+certs/
+private/
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Docker-related
+.docker/
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# Logs
+logs/
+*.log
+*.log.*
+log/
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+.temp/
+
+# Backup files
+*.bak
+*.backup
+*~
+*.swp
+*.swo
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.atom/
+.brackets.json
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Node.js (if using Node-based services)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python (if using Python-based services)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Caddy-specific
+/compose-files/caddy/data/
+/compose-files/caddy/config/
+caddy_data/
+caddy_config/
+
+# Service-specific ignore patterns
+# Add patterns for each service you add to the compose-files directory
+# Example:
+# /compose-files/postgres/data/
+# /compose-files/redis/data/
+
+# Documentation build artifacts (if using documentation generators)
+docs/_build/
+site/
+
+# Secrets and sensitive configuration
+secrets/
+.secrets/
+*.secret
+
+# Test files and coverage reports
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Local development overrides
+docker-compose.dev.yml
+docker-compose.local.yml
+compose.override.yml
