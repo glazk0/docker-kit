@@ -23,13 +23,12 @@ services:
       # Cloudflare API token for DNS management (optional)
       - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN:-}
     networks:
-      - caddy_network
+      - proxy
       
-networks:
-  caddy_network:
-    name: caddy_network
-    driver: bridge
-
 volumes:
   caddy_data: # Persistent volume for Caddy's certificates and state
   caddy_config: # Persistent volume for Caddy's configuration cache (optional but good practice)
+
+networks:
+  proxy:
+    external: true
