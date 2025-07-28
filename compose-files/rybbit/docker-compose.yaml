@@ -79,6 +79,8 @@ services:
       retries: 5
       start_period: 10s
     restart: unless-stopped
+    networks:
+      - proxy
 
   client:
     image: ghcr.io/rybbit-io/rybbit-client:${IMAGE_TAG:-latest}
@@ -98,7 +100,13 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+    networks:
+      - proxy
 
 volumes:
   clickhouse-data:
   postgres-data:
+
+networks:
+  proxy:
+    external: true
